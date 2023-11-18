@@ -2,6 +2,8 @@ from hub import light_matrix, motion_sensor, port, sound
 import motor,motor_pair, runloop, math
 from motor import BRAKE, HOLD, velocity
 from motor_pair import move_tank, move_tank_for_degrees, stop
+import color_sensor
+import color
 
 #color senser
 import color_sensor, color
@@ -181,6 +183,15 @@ async def armUp():
     print ('arm up')
     await motor.run_for_degrees(port.B, 360, 720)
 
+async def armUpByAngle(angle):
+    '''
+    Purpose:Lift up Arm
+    degrees: 1 to 360
+    speed: 100 to 1000
+    '''
+    print ('arm up')
+    await motor.run_for_degrees(port.B, angle, 720)
+
 async def armDown():
     '''
     Purpose:Lift up Arm
@@ -190,7 +201,7 @@ async def armDown():
     print ('arm down')
     await motor.run_for_degrees(port.B, -360, 1000, acceleration=100000)
 
-async def armUpByAngle(angle):
+async def armDownByAngle(angle):
     '''
     Purpose:Lift up Arm
     degrees: 1 to 360
@@ -221,6 +232,28 @@ async def tailDown():
     await motor.run_for_degrees(port.E, -360, 720)
 
 
+def sensed_color():
+    return color_sensor.color(port.D) == color.BLACK and color_sensor.color(port.F) == color.BLACK
+
+
+async def line_square():
+    motor_pair.move(motor_pair.PAIR_1, 0, velocity =30)
+    await runloop.until(sensed_color)
+    if color_sensor.color(port.D) == color.BLACK:
+        # motor_pair.move_tank(motor_pair.PAIR_1, -50, speed)
+        while color_sensor.color(port.F) != color.BLACK:
+            await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, 10, -10, 10)
+        motor_pair.stop(motor_pair.PAIR_1)
+    else:
+        while color_sensor.color(port.D) != color.BLACK:
+            await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, 10, 10, -10)
+        motor_pair.stop(motor_pair.PAIR_1)
+
+
+
+
+
+
 
 '''
 MISSIONS START
@@ -234,6 +267,7 @@ async def Mission_3DCinema():
     await turnLeft(17)
     await armDown()
     await armUp()
+    
     await armDown()
     await armUp()
 
@@ -246,16 +280,21 @@ async def Mission_TheaterSceneChange():
     await moveBackward(5)
     await turnRight(44)
     await moveForward(25)
+    await moveForward_QuarterInchIncrements(1)
     await armUp()
-    await turnLeft(74)
+    await turnLeft(73)
 
+    await runloop.sleep_ms(100)
     # print (color_sensor.rgbi(port.D))
     # print (color_sensor.rgbi(port.F))
     # print (color_sensor.reflection(port.D))
     # print (color_sensor.reflection(port.F))
 
-    while color_sensor.color(port.D) != color.BLACK or color_sensor.color(port.F) != color.BLACK:
-        await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, 10, 10, 10)
+    #while color_sensor.color(port.D) != color.BLACK or color_sensor.color(port.F) != color.BLACK:
+    #    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, 10, 10, 10)
+    await line_square() 
+    await runloop.sleep_ms(100)
+    
     motor_pair.stop(motor_pair.PAIR_1)
     await moveBackward_byQuarterInch(6)
     await armDown()
@@ -267,6 +306,7 @@ async def Mission_TheaterSceneChange():
     await turnLeft(33)
     await moveForward_QuarterInchIncrements(1)
     await armDown()
+    await runloop.sleep_ms(1000)
     await armDown()
     await moveBackward(1)
 
@@ -276,9 +316,8 @@ async def Mission_TheaterSceneChange():
 async def Mission_ImmersiveExperience():
     await turnRight(100)
     await armUp()
-    await moveForward(13)
-    #await moveForward_halfInchIncrements(1)
-    await turnLeft(5)
+    await moveForward(14)
+    await turnLeft(7)
     await armDown()
     await armDown()
     await armUp()
@@ -296,7 +335,8 @@ async def mission_MasterPiece():
 async def Mission_AugmentedReality():
     await moveBackward(2)
     await turnRight(26)
-    await moveForward(25)
+    await moveForward(24)
+    await moveForward_QuarterInchIncrements(1)
     await turnRight(5)
     await armUp()
     await runloop.sleep_ms(100)
@@ -304,7 +344,7 @@ async def Mission_AugmentedReality():
     await moveForward_halfInchIncrements(6)
     await armDown()
     await armDown()
-# await runloop.sleep_ms(50000)
+    # await runloop.sleep_ms(50000)
     await turnRight(40)
     await armDown()
     #await turnRight(5)
